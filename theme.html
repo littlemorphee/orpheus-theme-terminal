@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orpheus - Terminal</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Fira Code', 'Courier New', monospace;
+      background: transparent;
+      color: #33ff33;
+      overflow: hidden;
+    }
+
+    .container {
+      padding: 14px 18px;
+      background: rgba(0, 0, 0, 0.92);
+      border: 1px solid rgba(51, 255, 51, 0.25);
+      border-radius: 0;
+      max-width: 440px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      position: relative;
+    }
+
+    .container.visible { opacity: 1; }
+
+    .header {
+      font-size: 10px;
+      color: rgba(51, 255, 51, 0.4);
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+
+    .prompt { color: rgba(51, 255, 51, 0.6); }
+
+    .track-line {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .cover {
+      width: 56px;
+      height: 56px;
+      object-fit: cover;
+      flex-shrink: 0;
+      filter: grayscale(80%) brightness(0.8) contrast(1.2);
+      image-rendering: pixelated;
+    }
+
+    .track-info { overflow: hidden; flex: 1; }
+
+    .line {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.6;
+    }
+
+    .field { color: rgba(51, 255, 51, 0.5); }
+    .value { color: #33ff33; }
+
+    .title-val {
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .artist-val { font-size: 12px; }
+
+    .album-val {
+      font-size: 11px;
+      color: rgba(51, 255, 51, 0.45);
+    }
+
+    .status-bar {
+      margin-top: 10px;
+      font-size: 10px;
+      color: rgba(51, 255, 51, 0.3);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 7px;
+      height: 13px;
+      background: #33ff33;
+      animation: blink 1s step-end infinite;
+      vertical-align: middle;
+      margin-left: 2px;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .hidden { display: none; }
+
+    .scanline {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 1px,
+        rgba(51, 255, 51, 0.02) 1px,
+        rgba(51, 255, 51, 0.02) 2px
+      );
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="container">
+    <div class="header"><span class="prompt">orpheus@stream</span> ~ $ now-playing<span class="cursor"></span></div>
+    <div class="track-line">
+      <img class="cover" id="cover" src="" alt="">
+      <div class="track-info">
+        <div class="line"><span class="field">track: </span><span class="value title-val" id="title">-</span></div>
+        <div class="line"><span class="field">artist: </span><span class="value artist-val" id="artist">-</span></div>
+        <div class="line" id="album-line"><span class="field">album: </span><span class="value album-val" id="album"></span></div>
+      </div>
+    </div>
+    <div class="status-bar">
+      <span id="status">▶ PLAYING</span>
+      <span>pid: <span id="pid">4242</span></span>
+    </div>
+    <div class="scanline"></div>
+  </div>
+
+  <script>
+    const container = document.getElementById('container');
+    const cover = document.getElementById('cover');
+    const title = document.getElementById('title');
+    const artist = document.getElementById('artist');
+    const album = document.getElementById('album');
+    const albumLine = document.getElementById('album-line');
+    const status = document.getElementById('status');
+    const pid = document.getElementById('pid');
+    let currentTrack = null;
+
+    pid.textContent = Math.floor(Math.random() * 90000) + 10000;
+
+    function updateUI(data) {
+      if (!data) { container.classList.remove('visible'); return; }
+      currentTrack = data;
+      title.textContent = data.title || '-';
+      artist.textContent = data.artist || '-';
+      if (data.album) { album.textContent = data.album; albumLine.classList.remove('hidden'); }
+      else { albumLine.classList.add('hidden'); }
+      if (data.coverUrl) { cover.src = data.coverUrl; cover.classList.remove('hidden'); }
+      else { cover.classList.add('hidden'); }
+      status.textContent = data.playing ? '▶ PLAYING' : '⏸ PAUSED';
+      container.classList.add('visible');
+    }
+
+    function connectSSE() {
+      const es = new EventSource('/api/stream');
+      es.addEventListener('track', (e) => { try { updateUI(JSON.parse(e.data)); } catch {} });
+      es.onerror = () => { es.close(); setTimeout(connectSSE, 2000); };
+    }
+
+    fetch('/api/now-playing').then(r => r.json()).then(updateUI).catch(console.error);
+    connectSSE();
+  </script>
+</body>
+</html>

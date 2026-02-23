@@ -1,0 +1,11 @@
+{
+  "name": "orpheus-theme-terminal",
+  "version": "1.0.0",
+  "description": "Retro terminal/hacker theme for Orpheus",
+  "author": "littlemorphee",
+  "license": "MIT",
+  "orpheus": {
+    "displayName": "Terminal",
+    "author": "littlemorphee"
+  }
+}

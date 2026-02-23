@@ -34,13 +34,12 @@
 
     .ascii-art {
       flex-shrink: 0;
-      font-size: 5.5px;
+      font-size: 5px;
       line-height: 5px;
-      letter-spacing: 0.5px;
+      letter-spacing: 1px;
       color: #33ff33;
       white-space: pre;
       text-shadow: 0 0 2px rgba(51, 255, 51, 0.3);
-      min-width: 70px;
     }
 
     .info {
@@ -71,32 +70,6 @@
     .album-line {
       font-size: 11px;
       color: rgba(51, 255, 51, 0.35);
-    }
-
-    .status-dot {
-      display: inline-block;
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      margin-right: 6px;
-      vertical-align: middle;
-      box-shadow: 0 0 4px currentColor;
-    }
-
-    .status-dot.playing {
-      background: #33ff33;
-      color: #33ff33;
-      animation: glow 1.5s ease-in-out infinite;
-    }
-
-    .status-dot.paused {
-      background: rgba(51, 255, 51, 0.3);
-      color: rgba(51, 255, 51, 0.3);
-    }
-
-    @keyframes glow {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
     }
 
     .cursor {
@@ -134,7 +107,7 @@
   <div class="container" id="container">
     <div class="ascii-art" id="asciiArt"></div>
     <div class="info">
-      <div class="line title-line"><span class="status-dot" id="statusDot"></span><span id="title">-</span><span class="cursor"></span></div>
+      <div class="line title-line"><span id="title">-</span><span class="cursor"></span></div>
       <div class="line artist-line" id="artist">-</div>
       <div class="line album-line" id="album-line"><span id="album"></span></div>
     </div>
@@ -148,12 +121,13 @@
     const artist = document.getElementById('artist');
     const album = document.getElementById('album');
     const albumLine = document.getElementById('album-line');
-    const statusDot = document.getElementById('statusDot');
     let currentTrack = null;
 
+    // Character aspect ratio compensation: monospace chars are ~2x taller than wide
+    // So we use double width to get a square-looking output
     const ASCII_CHARS = ' .:-=+*#%@';
-    const ASCII_WIDTH = 28;
-    const ASCII_HEIGHT = 28;
+    const ASCII_WIDTH = 36;
+    const ASCII_HEIGHT = 18;
 
     function imageToAscii(imgSrc) {
       return new Promise((resolve) => {
@@ -206,7 +180,6 @@
       } else if (!data.coverUrl) {
         asciiArt.classList.add('hidden');
       }
-      statusDot.className = 'status-dot ' + (data.playing ? 'playing' : 'paused');
       container.classList.add('visible');
     }
 
